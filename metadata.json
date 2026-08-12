@@ -1,0 +1,6 @@
+{
+  "name": "QuoteFlow",
+  "description": "Quotation and Invoice app for freelancers and mobile service businesses with WhatsApp workflow, photo annotations, PDF generation, and smart profession templates.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
