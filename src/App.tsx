@@ -1,3 +1,4 @@
+import { CreateQuoteModal } from './components/CreateQuoteModal';
 import React, { useEffect, useState } from 'react';
 import { AppView, BusinessProfile, Customer, Invoice, Quote } from './types';
 import { TRADE_TEMPLATES } from './data/seedData';
@@ -286,16 +287,16 @@ export default function App() {
             />
           )}
 
-          {currentView === 'quote_builder' && (
-            <QuoteBuilderView
-              profile={profile}
-              customers={customers}
-              tradeTemplates={tradeTemplates}
-              onSaveQuote={handleSaveQuote}
-              onCancel={() => setCurrentView('dashboard')}
-              quoteToEdit={selectedQuote}
-            />
-          )}
+         {currentView === 'quote_builder' && (
+  <QuoteBuilderView
+    profile={profile}
+    customers={customers}
+    tradeTemplates={tradeTemplates}
+    onSaveQuote={handleSaveQuote}
+    onCancel={() => setCurrentView('dashboard')}
+    quoteToEdit={selectedQuote}
+  />
+)}
 
           {currentView === 'quote_detail' && selectedQuote && (
             <QuoteDetailView
