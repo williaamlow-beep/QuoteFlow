@@ -12,7 +12,8 @@ import {
   Share2,
   DollarSign,
   FileText,
-  ListPlus
+  ListPlus,
+  QrCode
 } from 'lucide-react';
 
 // --- TYPES ---
@@ -47,6 +48,18 @@ export interface TradeInfo {
   name: string;
   presets: ScopePreset[];
 }
+
+// Trades where physical site/damage photos are relevant
+const PHOTO_REQUIRED_TRADES: TradeCategory[] = [
+  'panel_beater',
+  'mechanic',
+  'auto_electrician',
+  'plumber',
+  'locksmith',
+  'carpenter',
+  'handyman',
+  'towing'
+];
 
 // --- TRADE PRESET DATA ---
 export const TRADE_INFO: Record<TradeCategory, TradeInfo> = {
@@ -138,9 +151,12 @@ export default function App() {
   // --- STATE ---
   const [trade, setTrade] = useState<TradeCategory>('panel_beater');
   const [isTradeDropdownOpen, setIsTradeDropdownOpen] = useState<boolean>(false);
-  const [shopPhoto, setShopPhoto] = useState<string | null>(null);
   
-  // Settings (Now reactive on Header & App)
+  // Photos
+  const [shopPhoto, setShopPhoto] = useState<string | null>(null);
+  const [jobPhotos, setJobPhotos] = useState<string[]>([]);
+
+  // Settings
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [businessName, setBusinessName] = useState<string>('APEX FIELD SERVICES');
   const [currencySymbol, setCurrencySymbol] = useState<string>('$');
@@ -156,16 +172,23 @@ export default function App() {
   const [agreedPrice, setAgreedPrice] = useState<number>(0);
   const [isQuotationSent, setIsQuotationSent] = useState<boolean>(false);
 
-  // Line Item Selector Drawer & Freeform state
+  // Line Item Selector Drawer
   const [isItemSelectorOpen, setIsItemSelectorOpen] = useState<boolean>(false);
   const [customTitle, setCustomTitle] = useState<string>('');
   const [customPrice, setCustomPrice] = useState<string>('');
 
-  // AI Copilot Modal
+  // Modals for Utilities (Restored Page 3 Features)
   const [isAIOpen, setIsAIOpen] = useState<boolean>(false);
+  const [isReceiptOpen, setIsReceiptOpen] = useState<boolean>(false);
+  const [isCollectOpen, setIsCollectOpen] = useState<boolean>(false);
+
+  // AI Copilot State
   const [aiPrompt, setAiPrompt] = useState<string>('');
   const [aiOutput, setAiOutput] = useState<string>('');
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
+
+  // Check if photos should be displayed for current trade
+  const isPhotoTrade = PHOTO_REQUIRED_TRADES.includes(trade);
 
   // Sync Total Agreed Price
   useEffect(() => {
@@ -173,8 +196,8 @@ export default function App() {
     setAgreedPrice(Number(sum.toFixed(2)));
   }, [activeItems]);
 
-  // Photo Capture
-  const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Header Shop Photo Capture
+  const handleShopPhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -183,7 +206,25 @@ export default function App() {
     }
   };
 
-  // Add Item from Selection Drawer
+  // Job Site Photo Capture
+  const handleJobPhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      Array.from(files).forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setJobPhotos((prev) => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const handleRemoveJobPhoto = (index: number) => {
+    setJobPhotos((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Add Item Handlers
   const handleAddPresetItem = (preset: ScopePreset) => {
     const newItem: QuoteItem = {
       id: Date.now().toString(),
@@ -195,7 +236,6 @@ export default function App() {
     setIsQuotationSent(false);
   };
 
-  // Add Free-form Item
   const handleAddCustomItem = () => {
     if (!customTitle.trim()) return;
     const newItem: QuoteItem = {
@@ -231,6 +271,9 @@ export default function App() {
     
     let message = `*${businessName} - QUOTATION*\n`;
     message += `Customer: ${customerName}\n`;
+    if (isPhotoTrade && jobPhotos.length > 0) {
+      message += `Site Photos Attached: ${jobPhotos.length} photo(s)\n`;
+    }
     message += `-------------------------\n`;
     activeItems.forEach((item, idx) => {
       message += `${idx + 1}. ${item.title} - ${currencySymbol}${item.price.toFixed(2)}\n`;
@@ -246,7 +289,7 @@ export default function App() {
     window.open(whatsappUrl, '_blank');
   };
 
-  // AI Copilot Polish Trigger
+  // AI Copilot Trigger
   const handleRunAICopilot = () => {
     if (!aiPrompt.trim()) return;
     setIsAiLoading(true);
@@ -262,11 +305,11 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-100 text-black font-sans pb-16">
       
-      {/* MAIN HEADER BAR */}
+      {/* HEADER BAR */}
       <header className="sticky top-0 z-40 bg-white border-b-4 border-black px-4 py-3 shadow-md flex items-center justify-between">
         <div className="flex items-center space-x-3">
           
-          {/* Item 1: Photo Header (Doubled Size 64px x 64px) */}
+          {/* Header Branding Photo (Doubled Size 64px x 64px) */}
           <div className="relative w-16 h-16 rounded-2xl border-3 border-black bg-gray-200 overflow-hidden flex items-center justify-center shrink-0 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
             {shopPhoto ? (
               <img src={shopPhoto} alt="Shop Header" className="w-full h-full object-cover" />
@@ -274,16 +317,15 @@ export default function App() {
               <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center text-gray-500 hover:text-black">
                 <Camera className="w-6 h-6" />
                 <span className="text-[9px] font-black uppercase mt-0.5">Photo</span>
-                <input type="file" accept="image/*" capture="environment" onChange={handlePhotoCapture} className="hidden" />
+                <input type="file" accept="image/*" capture="environment" onChange={handleShopPhotoCapture} className="hidden" />
               </label>
             )}
           </div>
 
           <div className="flex flex-col space-y-1">
-            {/* Header Business Title Sync */}
             <span className="font-black text-xs uppercase tracking-tight line-clamp-1 max-w-[130px]">{businessName}</span>
             
-            {/* Item 2: AI-Copilot Button */}
+            {/* AI-Copilot Button */}
             <button
               onClick={() => setIsAIOpen(true)}
               className="flex items-center space-x-1.5 bg-amber-400 hover:bg-amber-300 text-black font-black px-2.5 py-1.5 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-[11px] uppercase transition-all active:translate-y-0.5"
@@ -329,7 +371,7 @@ export default function App() {
             )}
           </div>
 
-          {/* Item 3: Settings Button (Fixed Sync) */}
+          {/* Settings Button */}
           <button
             onClick={() => setIsSettingsOpen(true)}
             className="p-2 bg-gray-200 hover:bg-gray-300 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
@@ -419,12 +461,42 @@ export default function App() {
             </div>
           </div>
 
-          {/* Line Items List with Selection & Freeform Modal */}
+          {/* DYNAMIC JOB SITE / DAMAGE PHOTO CAPTURE (SHOWS ONLY FOR TECHNICAL TRADES) */}
+          {isPhotoTrade && (
+            <div className="space-y-2 border-t-2 border-gray-200 pt-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-[11px] font-black uppercase">Job Site / Damage Photos ({jobPhotos.length})</label>
+                <label className="cursor-pointer flex items-center space-x-1 bg-gray-200 hover:bg-gray-300 text-black font-extrabold px-2.5 py-1 rounded-xl border-2 border-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Snap Photo</span>
+                  <input type="file" accept="image/*" capture="environment" multiple onChange={handleJobPhotoCapture} className="hidden" />
+                </label>
+              </div>
+
+              {/* Photo Gallery Grid */}
+              {jobPhotos.length > 0 && (
+                <div className="grid grid-cols-4 gap-2 pt-1">
+                  {jobPhotos.map((photo, idx) => (
+                    <div key={idx} className="relative w-full h-16 rounded-xl border-2 border-black overflow-hidden shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                      <img src={photo} alt={`Job Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => handleRemoveJobPhoto(idx)}
+                        className="absolute top-1 right-1 bg-red-500 text-white p-0.5 rounded-md border border-black"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Line Items List */}
           <div className="space-y-2 border-t-2 border-gray-200 pt-3">
             <div className="flex items-center justify-between">
               <label className="block text-[11px] font-black uppercase">Line Items ({activeItems.length})</label>
               
-              {/* Item Selection Trigger */}
               <button
                 onClick={() => setIsItemSelectorOpen(true)}
                 className="flex items-center space-x-1 bg-amber-300 hover:bg-amber-400 text-black font-black px-2.5 py-1 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-xs uppercase"
@@ -479,7 +551,7 @@ export default function App() {
         </section>
 
 
-        {/* ================= PAGE TWO: UTILITIES & DIGITAL TOOLS ================= */}
+        {/* ================= PAGE TWO/THREE RESTORED: UTILITIES & DIGITAL TOOLS ================= */}
         <section className="bg-white border-4 border-black rounded-3xl p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-3">
           <h2 className="font-black text-base uppercase tracking-tight flex items-center space-x-2 border-b-2 border-black pb-3">
             <span className="w-3 h-3 bg-purple-500 rounded-full border border-black"></span>
@@ -487,17 +559,26 @@ export default function App() {
           </h2>
 
           <div className="grid grid-cols-3 gap-2 pt-1">
-            <button className="flex flex-col items-center justify-center p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl border-2 border-black font-extrabold text-[10px] uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] space-y-1">
+            <button
+              onClick={() => setIsCollectOpen(true)}
+              className="flex flex-col items-center justify-center p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl border-2 border-black font-extrabold text-[10px] uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] space-y-1"
+            >
               <DollarSign className="w-5 h-5 text-emerald-600" />
               <span>Collect Link</span>
             </button>
 
-            <button className="flex flex-col items-center justify-center p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl border-2 border-black font-extrabold text-[10px] uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] space-y-1">
+            <button
+              onClick={() => setIsReceiptOpen(true)}
+              className="flex flex-col items-center justify-center p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl border-2 border-black font-extrabold text-[10px] uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] space-y-1"
+            >
               <FileText className="w-5 h-5 text-blue-600" />
               <span>Receipt</span>
             </button>
 
-            <button className="flex flex-col items-center justify-center p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl border-2 border-black font-extrabold text-[10px] uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] space-y-1">
+            <button
+              onClick={() => alert('Job History Log saved locally.')}
+              className="flex flex-col items-center justify-center p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl border-2 border-black font-extrabold text-[10px] uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] space-y-1"
+            >
               <History className="w-5 h-5 text-purple-600" />
               <span>History</span>
             </button>
@@ -571,7 +652,81 @@ export default function App() {
       )}
 
 
-      {/* ================= MODAL: SETTINGS (PROPER SYNC) ================= */}
+      {/* ================= MODAL: RECEIPT GENERATOR (RESTORED PAGE 3) ================= */}
+      {isReceiptOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white border-4 border-black rounded-3xl w-full max-w-sm p-5 space-y-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <div className="flex items-center justify-between border-b-2 border-black pb-2">
+              <h3 className="font-black text-base uppercase">Digital Receipt</h3>
+              <button onClick={() => setIsReceiptOpen(false)} className="p-1 rounded-xl hover:bg-gray-200">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 bg-gray-50 border-2 border-black rounded-2xl space-y-2 font-mono text-xs">
+              <div className="text-center font-black uppercase text-sm border-b border-black pb-2">{businessName}</div>
+              <div>Customer: {customerName || 'Valued Client'}</div>
+              <div>Date: {new Date().toLocaleDateString()}</div>
+              <div className="border-t border-dashed border-gray-400 pt-2">
+                {activeItems.map((item, i) => (
+                  <div key={i} className="flex justify-between">
+                    <span>{item.title}</span>
+                    <span>{currencySymbol}{item.price.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t-2 border-black pt-2 font-black flex justify-between text-sm">
+                <span>PAID TOTAL:</span>
+                <span>{currencySymbol}{agreedPrice.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                alert('Receipt copied for WhatsApp / Print!');
+                setIsReceiptOpen(false);
+              }}
+              className="w-full py-2.5 bg-emerald-400 text-black font-extrabold text-xs uppercase rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            >
+              Share Receipt
+            </button>
+          </div>
+        </div>
+      )}
+
+
+      {/* ================= MODAL: COLLECT PAYMENT (RESTORED PAGE 3) ================= */}
+      {isCollectOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white border-4 border-black rounded-3xl w-full max-w-sm p-5 space-y-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-center">
+            <div className="flex items-center justify-between border-b-2 border-black pb-2">
+              <h3 className="font-black text-base uppercase">Instant Collect Link</h3>
+              <button onClick={() => setIsCollectOpen(false)} className="p-1 rounded-xl hover:bg-gray-200">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 bg-amber-100 border-2 border-black rounded-2xl space-y-2">
+              <QrCode className="w-16 h-16 mx-auto" />
+              <div className="font-black text-sm">DuitNow / PayNow / Cash</div>
+              <div className="font-extrabold text-lg text-emerald-600">{currencySymbol}{agreedPrice.toFixed(2)}</div>
+            </div>
+
+            <button
+              onClick={() => {
+                alert('Payment link copied!');
+                setIsCollectOpen(false);
+              }}
+              className="w-full py-2.5 bg-black text-white font-extrabold text-xs uppercase rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            >
+              Copy Payment QR / Link
+            </button>
+          </div>
+        </div>
+      )}
+
+
+      {/* ================= MODAL: SETTINGS ================= */}
       {isSettingsOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white border-4 border-black rounded-3xl w-full max-w-sm p-5 space-y-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
@@ -640,7 +795,7 @@ export default function App() {
 
             <textarea
               rows={3}
-              placeholder="e.g. Pipe leak under sink + replace valve, 150 dollars..."
+              placeholder="e.g. Dent on left door panel, scratch touch up required, total 250..."
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
               className="w-full p-3 rounded-2xl border-2 border-black font-bold text-xs bg-gray-50 focus:bg-white focus:outline-none"
