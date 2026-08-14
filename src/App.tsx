@@ -269,17 +269,25 @@ export default function App() {
     }
     const finalPhone = useCustomPrefix ? `${customPrefix}${phoneNumber}` : `${phonePrefix}${phoneNumber}`;
     
-    let message = `*${businessName} - QUOTATION*\n`;
-    message += `Customer: ${customerName}\n`;
+    let message = `*${businessName} - QUOTATION*
+`;
+    message += `Customer: ${customerName}
+`;
     if (isPhotoTrade && jobPhotos.length > 0) {
-      message += `Site Photos Attached: ${jobPhotos.length} photo(s)\n`;
+      message += `Site Photos Attached: ${jobPhotos.length} photo(s)
+`;
     }
-    message += `-------------------------\n`;
+    message += `-------------------------
+`;
     activeItems.forEach((item, idx) => {
-      message += `${idx + 1}. ${item.title} - ${currencySymbol}${item.price.toFixed(2)}\n`;
+      message += `${idx + 1}. ${item.title} - ${currencySymbol}${item.price.toFixed(2)}
+`;
     });
-    message += `-------------------------\n`;
-    message += `*TOTAL AGREED PRICE: ${currencySymbol}${agreedPrice.toFixed(2)}*\n\n`;
+    message += `-------------------------
+`;
+    message += `*TOTAL AGREED PRICE: ${currencySymbol}${agreedPrice.toFixed(2)}*
+
+`;
     message += `Thank you for choosing ${businessName}!`;
 
     const encoded = encodeURIComponent(message);
@@ -296,7 +304,14 @@ export default function App() {
     setAiOutput('');
 
     setTimeout(() => {
-      const formattedResult = `Hello ${customerName || 'Valued Customer'}!\n\nRegarding your service query:\n• ${aiPrompt}\n\nEstimated Quote Total: ${currencySymbol}${agreedPrice.toFixed(2)}\n\nPlease let us know if you would like us to schedule this in!`;
+      const formattedResult = `Hello ${customerName || 'Valued Customer'}!
+
+Regarding your service query:
+• ${aiPrompt}
+
+Estimated Quote Total: ${currencySymbol}${agreedPrice.toFixed(2)}
+
+Please let us know if you would like us to schedule this in!`;
       setAiOutput(formattedResult);
       setIsAiLoading(false);
     }, 800);
@@ -551,7 +566,37 @@ export default function App() {
         </section>
 
 
-        {/* ================= PAGE TWO/THREE RESTORED: UTILITIES & DIGITAL TOOLS ================= */}
+        {/* ================= PAGE TWO: RESTORED PRICE LIST & PRESETS ================= */}
+        <section className="bg-white border-4 border-black rounded-3xl p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-4">
+          <div className="flex items-center justify-between border-b-2 border-black pb-3">
+            <h2 className="font-black text-base uppercase tracking-tight flex items-center space-x-2">
+              <span className="w-3 h-3 bg-amber-400 rounded-full border border-black"></span>
+              <span>Set Price List ({TRADE_INFO[trade].presets.length})</span>
+            </h2>
+            <span className="text-xs font-bold text-gray-500 uppercase">{TRADE_INFO[trade].name}</span>
+          </div>
+
+          <div className="space-y-2.5">
+            {TRADE_INFO[trade].presets.map((preset) => (
+              <div
+                key={preset.id}
+                className="flex items-center justify-between p-3 bg-gray-50 hover:bg-amber-50 rounded-2xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+              >
+                <span className="font-extrabold text-xs">{preset.title}</span>
+                <button
+                  onClick={() => handleAddPresetItem(preset)}
+                  className="flex items-center space-x-1 bg-emerald-400 hover:bg-emerald-300 text-black font-black px-2.5 py-1.5 rounded-xl border-2 border-black text-xs shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>{currencySymbol}{preset.price}</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+
+        {/* ================= PAGE THREE: RESTORED UTILITIES & DIGITAL TOOLS ================= */}
         <section className="bg-white border-4 border-black rounded-3xl p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-3">
           <h2 className="font-black text-base uppercase tracking-tight flex items-center space-x-2 border-b-2 border-black pb-3">
             <span className="w-3 h-3 bg-purple-500 rounded-full border border-black"></span>
@@ -652,7 +697,7 @@ export default function App() {
       )}
 
 
-      {/* ================= MODAL: RECEIPT GENERATOR (RESTORED PAGE 3) ================= */}
+      {/* ================= MODAL: RECEIPT GENERATOR ================= */}
       {isReceiptOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white border-4 border-black rounded-3xl w-full max-w-sm p-5 space-y-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
@@ -695,7 +740,7 @@ export default function App() {
       )}
 
 
-      {/* ================= MODAL: COLLECT PAYMENT (RESTORED PAGE 3) ================= */}
+      {/* ================= MODAL: COLLECT PAYMENT ================= */}
       {isCollectOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white border-4 border-black rounded-3xl w-full max-w-sm p-5 space-y-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-center">
