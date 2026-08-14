@@ -152,7 +152,7 @@ export default function App() {
   const [trade, setTrade] = useState<TradeCategory>('panel_beater');
   const [isTradeDropdownOpen, setIsTradeDropdownOpen] = useState<boolean>(false);
   
-  // Photos
+  // Photos (Shop Header Photo + Panel Beater / Trade Damage Photos)
   const [shopPhoto, setShopPhoto] = useState<string | null>(null);
   const [jobPhotos, setJobPhotos] = useState<string[]>([]);
 
@@ -177,7 +177,7 @@ export default function App() {
   const [customTitle, setCustomTitle] = useState<string>('');
   const [customPrice, setCustomPrice] = useState<string>('');
 
-  // Modals for Utilities (Restored Page 3 Features)
+  // Modals for Utilities
   const [isAIOpen, setIsAIOpen] = useState<boolean>(false);
   const [isReceiptOpen, setIsReceiptOpen] = useState<boolean>(false);
   const [isCollectOpen, setIsCollectOpen] = useState<boolean>(false);
@@ -206,7 +206,7 @@ export default function App() {
     }
   };
 
-  // Job Site Photo Capture
+  // Job Site / Damage Photo Capture (Camera for Panel Beaters / Plumbers)
   const handleJobPhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
@@ -269,25 +269,17 @@ export default function App() {
     }
     const finalPhone = useCustomPrefix ? `${customPrefix}${phoneNumber}` : `${phonePrefix}${phoneNumber}`;
     
-    let message = `*${businessName} - QUOTATION*
-`;
-    message += `Customer: ${customerName}
-`;
+    let message = `*${businessName} - QUOTATION*\n`;
+    message += `Customer: ${customerName}\n`;
     if (isPhotoTrade && jobPhotos.length > 0) {
-      message += `Site Photos Attached: ${jobPhotos.length} photo(s)
-`;
+      message += `Site/Damage Photos Attached: ${jobPhotos.length} photo(s)\n`;
     }
-    message += `-------------------------
-`;
+    message += `-------------------------\n`;
     activeItems.forEach((item, idx) => {
-      message += `${idx + 1}. ${item.title} - ${currencySymbol}${item.price.toFixed(2)}
-`;
+      message += `${idx + 1}. ${item.title} - ${currencySymbol}${item.price.toFixed(2)}\n`;
     });
-    message += `-------------------------
-`;
-    message += `*TOTAL AGREED PRICE: ${currencySymbol}${agreedPrice.toFixed(2)}*
-
-`;
+    message += `-------------------------\n`;
+    message += `*TOTAL AGREED PRICE: ${currencySymbol}${agreedPrice.toFixed(2)}*\n\n`;
     message += `Thank you for choosing ${businessName}!`;
 
     const encoded = encodeURIComponent(message);
@@ -304,14 +296,7 @@ export default function App() {
     setAiOutput('');
 
     setTimeout(() => {
-      const formattedResult = `Hello ${customerName || 'Valued Customer'}!
-
-Regarding your service query:
-• ${aiPrompt}
-
-Estimated Quote Total: ${currencySymbol}${agreedPrice.toFixed(2)}
-
-Please let us know if you would like us to schedule this in!`;
+      const formattedResult = `Hello ${customerName || 'Valued Customer'}!\n\nRegarding your service query:\n• ${aiPrompt}\n\nEstimated Quote Total: ${currencySymbol}${agreedPrice.toFixed(2)}\n\nPlease let us know if you would like us to schedule this in!`;
       setAiOutput(formattedResult);
       setIsAiLoading(false);
     }, 800);
@@ -476,20 +461,20 @@ Please let us know if you would like us to schedule this in!`;
             </div>
           </div>
 
-          {/* DYNAMIC JOB SITE / DAMAGE PHOTO CAPTURE (SHOWS ONLY FOR TECHNICAL TRADES) */}
+          {/* DYNAMIC JOB SITE / DAMAGE PHOTO CAPTURE CAMERA (PANEL BEATER & TRADE FEATURE) */}
           {isPhotoTrade && (
             <div className="space-y-2 border-t-2 border-gray-200 pt-3">
               <div className="flex items-center justify-between">
                 <label className="block text-[11px] font-black uppercase">Job Site / Damage Photos ({jobPhotos.length})</label>
-                <label className="cursor-pointer flex items-center space-x-1 bg-gray-200 hover:bg-gray-300 text-black font-extrabold px-2.5 py-1 rounded-xl border-2 border-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                  <Camera className="w-3.5 h-3.5" />
-                  <span>Snap Photo</span>
+                <label className="cursor-pointer flex items-center space-x-1 bg-amber-300 hover:bg-amber-400 text-black font-extrabold px-2.5 py-1.5 rounded-xl border-2 border-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                  <Camera className="w-4 h-4 text-black" />
+                  <span>SNAP SITE PHOTO</span>
                   <input type="file" accept="image/*" capture="environment" multiple onChange={handleJobPhotoCapture} className="hidden" />
                 </label>
               </div>
 
               {/* Photo Gallery Grid */}
-              {jobPhotos.length > 0 && (
+              {jobPhotos.length > 0 ? (
                 <div className="grid grid-cols-4 gap-2 pt-1">
                   {jobPhotos.map((photo, idx) => (
                     <div key={idx} className="relative w-full h-16 rounded-xl border-2 border-black overflow-hidden shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
@@ -502,6 +487,10 @@ Please let us know if you would like us to schedule this in!`;
                       </button>
                     </div>
                   ))}
+                </div>
+              ) : (
+                <div className="text-center py-3 text-gray-400 font-bold text-[11px] border-2 border-dashed border-gray-300 rounded-xl">
+                  Tap SNAP SITE PHOTO to capture vehicle damage or job site
                 </div>
               )}
             </div>
